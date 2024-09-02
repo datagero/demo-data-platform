@@ -1,0 +1,11 @@
+.DS_Store
+poetry.lock
+__pycache__
+
+datalake
+output-copy
+output
+tmp
+
+*drawio
+tests/data
