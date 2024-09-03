@@ -1,0 +1,44 @@
+{
+    "Base Schema 1": [
+        "Layer 2 Name",
+        "Scan",
+        "Layer 1 Depth(in)",
+        "Layer 1 Name",
+        "Layer 2 Depth(in)",
+        "MP",
+        "Lat(\u00b0)",
+        "Dist.(ft)",
+        "Long(\u00b0)"
+    ],
+    "Variation 1A": [
+        "Layer 2 Name",
+        "Scan",
+        "Layer 1 Depth(in)",
+        "Layer 1 Name",
+        "Layer 2 Depth(in)",
+        "MP",
+        "Lat(\u00b0)",
+        "Dist.(ft)",
+        "Long(\u00b0)",
+        "Layer 1 2-Way Time",
+        "Layer 2 2-Way Time",
+        "User Mark"
+    ],
+    "Variation 1B": [
+        "Layer 2 Name",
+        "Scan",
+        "Layer 1 Depth(in)",
+        "Layer 1 Name",
+        "Layer 2 Depth(in)",
+        "MP",
+        "Lat(\u00b0)",
+        "Dist.(ft)",
+        "Long(\u00b0)",
+        "Layer 3 Layer Diel.",
+        "Time",
+        "Layer 3 Name",
+        "Layer 1 Layer Diel.",
+        "Layer 3 Depth(in)",
+        "Layer 2 Layer Diel."
+    ]
+}
