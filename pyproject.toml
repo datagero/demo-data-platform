@@ -5,12 +5,16 @@ description = ""
 authors = ["datagero <datagero@outlook.com>"]
 readme = "README.md"
 
+packages = [
+    { include = "src"}
+]
+
 [tool.poetry.dependencies]
 python = "^3.9,<3.13"
 pandas = "^2.2.2"
 openpyxl = "^3.1.5"
 apache-airflow = "^2.10.0"
-
+pytest = "^8.3.2"
 
 [build-system]
 requires = ["poetry-core"]
