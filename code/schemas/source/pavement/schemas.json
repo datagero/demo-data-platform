@@ -1,0 +1,186 @@
+{
+    "Base Schema 1": [
+        "Surface AC Depth (in.)",
+        "Scan",
+        "Surface AC Thickness (in.)",
+        "Lattitude",
+        "Longitude",
+        "PCC Thickness (in.)",
+        "Bottom AC Thickness (in.)",
+        "Bottom AC Depth (in.)",
+        "PCC Depth (in.)"
+    ],
+    "Variation 1A": [
+        "Surface AC Depth (in.)",
+        "Scan",
+        "Surface AC Thickness (in.)",
+        "Lattitude",
+        "Longitude",
+        "PCC Thickness (in.)",
+        "Bottom AC Thickness (in.)",
+        "Bottom AC Depth (in.)",
+        "PCC Depth (in.)",
+        "Distance from Start of Ramp (ft)"
+    ],
+    "Variation 1B": [
+        "Surface AC Depth (in.)",
+        "Scan",
+        "Surface AC Thickness (in.)",
+        "Lattitude",
+        "Longitude",
+        "PCC Thickness (in.)",
+        "Bottom AC Thickness (in.)",
+        "Bottom AC Depth (in.)",
+        "PCC Depth (in.)",
+        "MP"
+    ],
+    "Base Schema 2": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "AC Depth (in.)",
+        "PCC Depth (in.)",
+        "MP"
+    ],
+    "Variation 2A": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "AC Depth (in.)",
+        "PCC Depth (in.)",
+        "MP",
+        "Base Layer Depth (in.)"
+    ],
+    "Variation 2B": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "AC Depth (in.)",
+        "PCC Depth (in.)",
+        "MP",
+        "Base Layer Depth (in.)",
+        "Base Thickness (in)"
+    ],
+    "Base Schema 3": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "PCC Depth (in.)",
+        "MP"
+    ],
+    "Variation 3A": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "PCC Depth (in.)",
+        "MP",
+        "AC Depth (in.)",
+        "AC Thickness (in.)",
+        "Base Layer 2 Depth (in.)"
+    ],
+    "Variation 3B": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "PCC Depth (in.)",
+        "MP",
+        "Base Layer 2 Depth (in.)",
+        "Base Layer 1 Depth (in.)"
+    ],
+    "Variation 3C": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "PCC Depth (in.)",
+        "MP",
+        "Total Depth AC (in.)",
+        "PCC Thickness (in.)",
+        "AC Layer 1 (in.)",
+        "Bottom Base Layer Depth (in.)",
+        "AC Layer 2 (in.)"
+    ],
+    "Base Schema 4": [
+        "Scan",
+        "Lattitude",
+        "Distance from Start of Ramp (ft)",
+        "Longitude",
+        "PCC Depth (in.)"
+    ],
+    "Variation 4A": [
+        "Scan",
+        "Lattitude",
+        "Distance from Start of Ramp (ft)",
+        "Longitude",
+        "PCC Depth (in.)",
+        "Base Layer 2 Depth (in.)",
+        "Base Layer 1 Depth (in.)"
+    ],
+    "Variation 4B": [
+        "Scan",
+        "Lattitude",
+        "Distance from Start of Ramp (ft)",
+        "Longitude",
+        "PCC Depth (in.)",
+        "AC Depth (in.)",
+        "AC Thickness (in.)",
+        "Base Layer 2 Depth (in.)"
+    ],
+    "Variation 4C": [
+        "Scan",
+        "Lattitude",
+        "Distance from Start of Ramp (ft)",
+        "Longitude",
+        "PCC Depth (in.)",
+        "Base Layer Depth (in.)",
+        "AC Depth (in.)"
+    ],
+    "Variation 4D": [
+        "Scan",
+        "Lattitude",
+        "Distance from Start of Ramp (ft)",
+        "Longitude",
+        "PCC Depth (in.)",
+        "Base Layer Depth (in.)",
+        "AC Depth (in.)",
+        "AC Thickness (in.)"
+    ],
+    "Base Schema 5": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "Distance from Ramp Start (ft)",
+        "PCC Depth (in.)"
+    ],
+    "Variation 5A": [
+        "Scan",
+        "Lattitude",
+        "Longitude",
+        "Distance from Ramp Start (ft)",
+        "PCC Depth (in.)",
+        "Total AC Depth (in.)"
+    ],
+    "Base Schema 6": [
+        "Lattitude",
+        "Scan",
+        "Longitude",
+        "MP"
+    ],
+    "Variation 6A": [
+        "Lattitude",
+        "Scan",
+        "Longitude",
+        "MP",
+        "Total AC Depth (in.)",
+        "Base Layer Depth (in.)"
+    ],
+    "Variation 6B": [
+        "Lattitude",
+        "Scan",
+        "Longitude",
+        "MP",
+        "AC Layer 1 (in.)",
+        "Total Depth AC (in.)",
+        "AC Layer 2 (in.)",
+        "Bottom Base Layer Depth (in.)"
+    ]
+}
