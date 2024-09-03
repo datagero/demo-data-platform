@@ -1,10 +1,9 @@
+# src/helpers/data_profiling/profile_schema_category.py
+
 import os
 import json
 import re
 from collections import defaultdict
-
-schemas_gpr = json.load(open('vip_sci/schemas/source/gpr/schemas.json'))
-schemas_pavement = json.load(open('vip_sci/schemas/source/pavement/schemas.json'))
 
 # Define function to load and analyze a JSON file
 def load_json_file(file_path):
@@ -157,6 +156,9 @@ def categorize_files(json_files, schemas, out_scope_sheetnames=None):
 
             # Check against schemas in order of priority
             for schema_name, schema in schemas.items():
+                if not schema:
+                    # Skip empty schemas
+                    continue
                 match_type, additional_columns, match_percentage = check_schema_match(schema, sheet_info)
 
                 if match_type == "exact":
@@ -203,52 +205,61 @@ def categorize_files(json_files, schemas, out_scope_sheetnames=None):
  
     return all_groups
 
+# Assuming `json_structures` contains your data and the `schemas_path` is None
+def get_schemas_from_json(json_structures):
+    # Use a set to gather unique column combinations
+    unique_schemas = {
+        tuple(val['columns'])
+        for dict_obj in json_structures.values()
+        for item_key, val in dict_obj.items()
+        if item_key != 'filepath'
+    }
 
-def check_schema_of_file_tab(filename, tabname):
-    [print(f"'{x}',") for x in json_structures_pavement[filename][tabname]['columns']]
-    return json_structures_pavement[filename][tabname]['columns']
+    # Initialize a dictionary to hold the base schemas and their variations
+    schema_dict = {}
 
-# List the contents of the extracted 'output' folder to check the files inside
-output_folder_path = 'output'
-output_files = os.listdir(output_folder_path)
-output_files
+    # Assign base schema names and variations
+    for idx, schema in enumerate(unique_schemas):
+        if idx == 0:
+            # First schema will be considered the "Base Schema"
+            schema_dict[f"Base Schema {idx + 1}"] = list(schema)
+        else:
+            # Subsequent schemas will be considered variations
+            schema_dict[f"Variation {idx}"] = list(schema)
 
-# Explore the contents of the subdirectory '2019 TSD Route GPR Files' within 'GPR only'
-gpr_files_path = os.path.join(output_folder_path, 'GPR only', '2019 TSD Route GPR Files')
-# include_only = ['I_75_RWP.json', 'I_95_SB_RWP.json']
+    return schema_dict
 
-# Explore the contents of a few subdirectories in 'Pavement Evaluation Summaries and Data'
-# Define the root directory path
-pavement_files_path = os.path.join(output_folder_path, 'Pavement Evaluation Summaries and Data')
+def main(json_files_path, output_path, filename, schemas_path=None, out_scope_sheetnames=None):
+    """
+    Main function to categorize files based on JSON profiles.
 
+    Args:
+    json_files_path (str): The path to the directory containing JSON files.
+    output_path (str): The path to the output directory.
+    filename (str): The name of the output file.
+    schemas_path (str, optional): Path to a JSON file containing predefined schemas. 
+                                  If not provided, schemas will be inferred from the input files.
+    out_scope_sheetnames (list, optional): A list of sheet names to exclude from analysis.
+    """
+    # Traverse the JSON files directory and load file structures
+    json_structures = traverse_files(json_files_path)
 
-# # Load and analyze the selected example files
-# json_structures = {os.path.basename(file_path): load_json_file(file_path) for file_path in example_files}
+    if schemas_path is None:
+        # Get schemas from input data if no predefined schemas are provided
+        schemas = get_schemas_from_json(json_structures)
+    else:
+        # Load predefined schemas from the given schemas_path
+        schemas = load_json_file(schemas_path)
 
-# json_structures
+    # Categorize the files based on the schemas
+    categorized_files = categorize_files(json_structures, schemas, out_scope_sheetnames)
+    
+    # Ensure the output directory exists
+    os.makedirs(output_path, exist_ok=True)
 
-json_structures_gpr = traverse_files(gpr_files_path, base_folder=output_folder_path)
-json_structures_pavement = traverse_files(pavement_files_path, base_folder=output_folder_path)
+    # Save the categorized files to a JSON output file
+    output_file_path = os.path.join(output_path, f'{filename}.json')
+    with open(output_file_path, 'w') as f:
+        json.dump(categorized_files, f, indent=4)
 
-# json_structures = {key: json_structures[key] for key in include_only}
-
-out_scope_sheetnames = ['Plots', 'Stats', 'Every 0.1 mile', 'Average Every 0.1 mile']
-out_scope_pairs = [('US_23_RWP_001.json', 'Sheet1')]
-
-# Categorize the files based on their structures
-categorized_files_gpr = categorize_files(json_structures_gpr, schemas_gpr, out_scope_sheetnames)
-categorized_files_pavement = categorize_files(json_structures_pavement, schemas_pavement, out_scope_sheetnames)
-
-# Output the categorized files
-with open('vip_sci/data_profiling/categorized_files/categorized_files_gpr.json', 'w') as f:
-    json.dump(categorized_files_gpr, f, indent=4)
-
-with open('vip_sci/data_profiling/categorized_files/categorized_files_pavement.json', 'w') as f:
-    json.dump(categorized_files_pavement, f, indent=4)
-
-pass
-
-# # Use the previously loaded JSON structures to categorize the files
-# categorized_files = categorize_files(json_structures)
-
-# categorized_files
+    print(f"Categorized files are saved in '{output_file_path}'.")

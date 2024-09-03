@@ -1,3 +1,5 @@
+# src/helpers/data_profiling/profile_excel_files.py
+
 import os
 import pandas as pd
 from openpyxl import load_workbook
@@ -96,10 +98,10 @@ def profile_excel_file(file_path):
 
     return file_profile
 
-def profile_excel_files(directory_path, output_folder='output', exclude_folders=None):
+def profile_excel_files(directory_path, output_folder, exclude_folders=None):
     """
     Profiles all Excel files in the given directory and its subdirectories,
-    excluding specified subfolders, and saving each profile result as a JSON file 
+    excluding specified subfolders, and saves each profile result as a JSON file 
     in the output folder.
     
     Args:
@@ -110,32 +112,24 @@ def profile_excel_files(directory_path, output_folder='output', exclude_folders=
     Returns:
     dict: A dictionary containing profiles of all Excel files processed.
     """
-    # Initialize exclude_folders as an empty list if not provided
     if exclude_folders is None:
         exclude_folders = []
 
-    # Create output folder if it does not exist
     os.makedirs(output_folder, exist_ok=True)
 
     all_profiles = {}
 
-    # Iterate through all files in the directory and subdirectories
     for root, dirs, files in os.walk(directory_path):
-        # Remove excluded directories from the search
         dirs[:] = [d for d in dirs if d not in exclude_folders]
         
-        # Process each file in the current directory
         for file in files:
             if file.endswith('.xlsx') or file.endswith('.xls'):
                 file_path = os.path.join(root, file)
                 print(f"Profiling {file_path}...")
 
-                # Profile the Excel file
                 profile = profile_excel_file(file_path)
                 all_profiles[file_path] = profile
 
-                # Save profile as a JSON file
-                # Maintain the nested directory structure in the output folder
                 relative_path = os.path.relpath(root, directory_path)
                 output_dir_path = os.path.join(output_folder, relative_path)
                 os.makedirs(output_dir_path, exist_ok=True)
@@ -147,9 +141,3 @@ def profile_excel_files(directory_path, output_folder='output', exclude_folders=
 
     print(f"Profiled all Excel files successfully! JSON files are saved in '{output_folder}'.")
     return all_profiles
-
-# Run the profiling for a directory
-data_path = "/Users/datagero/Documents/offline_repos/vip-sci/datalake/source/GPR only"
-exclude_folders = []  # Add subfolders to exclude if needed
-
-profile_excel_files(data_path, exclude_folders=exclude_folders)
