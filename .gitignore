@@ -1,6 +1,6 @@
 .DS_Store
-__pycache__
 poetry.lock
+__pycache__
 
 datalake
 output-copy
