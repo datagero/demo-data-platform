@@ -1,7 +1,7 @@
 .vscode
 .DS_Store
-poetry.lock
 __pycache__
+poetry.lock
 
 dev.duckdb.session.sql
 
