@@ -3,8 +3,8 @@ import json
 import re
 from collections import defaultdict
 
-schemas_gpr = json.load(open('vip_sci/schemas/source/gpr/schemas.json'))
-schemas_pavement = json.load(open('vip_sci/schemas/source/pavement/schemas.json'))
+schemas_gpr = json.load(open('src/schemas/source/gpr/schemas.json'))
+schemas_pavement = json.load(open('src/schemas/source/pavement/schemas.json'))
 
 # Define function to load and analyze a JSON file
 def load_json_file(file_path):
@@ -239,11 +239,14 @@ out_scope_pairs = [('US_23_RWP_001.json', 'Sheet1')]
 categorized_files_gpr = categorize_files(json_structures_gpr, schemas_gpr, out_scope_sheetnames)
 categorized_files_pavement = categorize_files(json_structures_pavement, schemas_pavement, out_scope_sheetnames)
 
+out_path = 'tmp/data_profiling/categorized_files'
+os.makedirs(out_path, exist_ok=True)
+
 # Output the categorized files
-with open('vip_sci/data_profiling/categorized_files/categorized_files_gpr.json', 'w') as f:
+with open(out_path+'/categorized_files_gpr.json', 'w') as f:
     json.dump(categorized_files_gpr, f, indent=4)
 
-with open('vip_sci/data_profiling/categorized_files/categorized_files_pavement.json', 'w') as f:
+with open(out_path+'/categorized_files_pavement.json', 'w') as f:
     json.dump(categorized_files_pavement, f, indent=4)
 
 pass
