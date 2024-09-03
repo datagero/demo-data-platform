@@ -40,8 +40,8 @@ if __name__ == "__main__":
     flattened_schemas_pavement = flatten_schemas(DEFAULT_SCHEMAS_PAVEMENT)
 
     # Save to json
-    with open('vip_sci/schemas/source/gpr/schemas.json', 'w') as f:
+    with open('code/schemas/source/gpr/schemas.json', 'w') as f:
         json.dump(flattened_schemas_gpr, f, indent=4)
 
-    with open('vip_sci/schemas/source/pavement/schemas.json', 'w') as f:
+    with open('code/schemas/source/pavement/schemas.json', 'w') as f:
         json.dump(flattened_schemas_pavement, f, indent=4)
