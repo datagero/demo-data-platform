@@ -2,20 +2,7 @@ import os
 import json
 import pandas as pd
 from collections import defaultdict
-
-def load_schema_definitions(schema_path):
-    """
-    Load schema definitions from a JSON file.
-
-    Args:
-    - schema_path (str): Path to the schema JSON file.
-
-    Returns:
-    - schemas (dict): Dictionary containing schema definitions.
-    """
-    with open(schema_path, 'r') as f:
-        schemas = json.load(f)
-    return schemas
+from src.interfaces.schema_manager import SchemaManager
 
 def load_categorized_files(categorized_file_path):
     """
@@ -107,6 +94,10 @@ def extract_sheet_names_for_schema(categorized_files, schema_name):
     """
     file_sheets = defaultdict(list)
 
+    # tmp for compatibility, need to replace spaces of keys with underscores
+    categorized_files["exact_match_groups"] = {k.replace(" ", "_"): v for k, v in categorized_files["exact_match_groups"].items()}
+    categorized_files["extended_match_groups"] = {k.replace(" ", "_"): v for k, v in categorized_files["extended_match_groups"].items()}
+
     # Extract from exact match groups
     for entry in categorized_files.get("exact_match_groups", {}).get(schema_name, []):
         file_path = entry[0]
@@ -127,36 +118,37 @@ def ingest_pipeline(schema_path, categorized_file_path, output_path):
     Ingest pipeline to process GPR files and normalize them into a common schema.
 
     Args:
-    - schema_path (str): Path to schema definitions JSON file.
+    - schema_path (str): Path to schema YAML file.
     - categorized_file_path (str): Path to categorized files JSON file.
-    - output_path (str): Output file path for normalized data.
+    - output_path (str): Output directory path for normalized data.
     """
-    # Step 1: Load schema definitions
-    schemas = load_schema_definitions(schema_path)
+    # Initialize SchemaManager for the target schema
+    schema_manager = SchemaManager(schema_path)
 
-    # Step 2: Load categorized files
+    # Load categorized files
     categorized_files = load_categorized_files(categorized_file_path)
 
-    # Step 3: Process each schema independently
-    for schema_name, schema_columns in schemas.items():
-        print(f"Processing schema: {schema_name}")
+    # Extract schema name from schema path (e.g., Variation_1A from the path)
+    schema_name = os.path.basename(schema_path).replace('.yaml', '')
 
-        # Get file paths and sheet names associated with the current schema
-        file_dict = extract_sheet_names_for_schema(categorized_files, schema_name)
+    # Process each file for the current schema
+    file_dict = extract_sheet_names_for_schema(categorized_files, schema_name)
+    
+    for file_path, sheet_names in file_dict.items():
+        # Load the data for the current file
+        data = load_gpr_file(file_path, sheet_names)
 
-        # Step 4: Process each file for the current schema
-        for file_path, sheet_names in file_dict.items():
-            # Load the data for the current file
-            data = load_gpr_file(file_path, sheet_names)
+        # Process each sheet separately
+        for sheet_name, sheet_data in data.items():
+            # Normalize data for the current sheet
+            normalized_data = normalize_data(file_path, sheet_name, sheet_data, schema_manager.schema.columns.keys())
 
-            # Process each sheet separately
-            for sheet_name, sheet_data in data.items():
-                # Step 5: Normalize data for the current sheet
-                normalized_data = normalize_data(file_path, sheet_name, sheet_data, schema_columns)
-
-                # Step 6: Store normalized data
+            # Validate normalized data
+            validated_data = schema_manager.validate_data(normalized_data)
+            if validated_data is not None:
+                # Store normalized and validated data
                 output_file = os.path.join(output_path, f"{schema_name}_{os.path.basename(file_path).replace('.xlsx', f'_{sheet_name}_normalized.csv')}")
-                store_normalized_data(normalized_data, output_file)
+                store_normalized_data(validated_data, output_file)
 
 if __name__ == '__main__':
     # Example usage
