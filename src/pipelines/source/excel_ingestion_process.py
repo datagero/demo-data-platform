@@ -1,8 +1,24 @@
 import os
 import json
+import yaml
+import argparse
 import pandas as pd
 from collections import defaultdict
 from src.interfaces.schema_manager import SchemaManager
+
+def load_config(config_path):
+    """
+    Load pipeline configuration from a YAML file.
+
+    Args:
+    - config_path (str): Path to the YAML configuration file.
+
+    Returns:
+    - config (dict): Dictionary containing configuration details.
+    """
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
 
 def load_categorized_files(categorized_file_path):
     """
@@ -65,8 +81,9 @@ def normalize_data(file_path, sheet_name, sheet_data, schema_columns):
             normalized_df[col] = None
 
     # Add metadata columns for tracking the file and sheet names
-    normalized_df['File'] = file_path
-    normalized_df['Sheet'] = sheet_name
+    normalized_df['source_filepath'] = file_path
+    normalized_df['source_sheetname'] = sheet_name
+    normalized_df['created_time'] = pd.Timestamp.now()
 
     return normalized_df
 
@@ -78,6 +95,8 @@ def store_normalized_data(normalized_data, output_path):
     - normalized_data (pd.DataFrame): Normalized data.
     - output_path (str): Output file path.
     """
+    # Create the output directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     normalized_data.to_csv(output_path, index=False)
     print(f"Normalized data saved to {output_path}")
 
@@ -113,28 +132,25 @@ def extract_sheet_names_for_schema(categorized_files, schema_name):
     return dict(file_sheets)
 
 # Main pipeline function
-def ingest_pipeline(schema_path, categorized_file_path, output_path):
+def ingest_pipeline(config_path):
     """
     Ingest pipeline to process GPR files and normalize them into a common schema.
 
     Args:
-    - schema_path (str): Path to schema YAML file.
-    - categorized_file_path (str): Path to categorized files JSON file.
-    - output_path (str): Output directory path for normalized data.
+    - config_path (str): Path to the pipeline configuration YAML file.
     """
+    # Load pipeline configuration
+    config = load_config(config_path)
+
     # Initialize SchemaManager for the target schema
+    schema_path = config.get('target').get('schema', {}).get('path', '')
     schema_manager = SchemaManager(schema_path)
 
-    # Load categorized files
-    categorized_files = load_categorized_files(categorized_file_path)
-
-    # Extract schema name from schema path (e.g., Variation_1A from the path)
-    schema_name = os.path.basename(schema_path).replace('.yaml', '')
-
-    # Process each file for the current schema
-    file_dict = extract_sheet_names_for_schema(categorized_files, schema_name)
-    
-    for file_path, sheet_names in file_dict.items():
+    # Process each source file as specified in the config
+    for source_file in config['source_files']:
+        file_path = source_file['path']
+        sheet_names = source_file['loader_config']['tab_names']
+        
         # Load the data for the current file
         data = load_gpr_file(file_path, sheet_names)
 
@@ -147,12 +163,17 @@ def ingest_pipeline(schema_path, categorized_file_path, output_path):
             validated_data = schema_manager.validate_data(normalized_data)
             if validated_data is not None:
                 # Store normalized and validated data
-                output_file = os.path.join(output_path, f"{schema_name}_{os.path.basename(file_path).replace('.xlsx', f'_{sheet_name}_normalized.csv')}")
+                output_path = config['target']['writer_config']['destination']
+                table_name_prefix = config['target']['writer_config']['table_name_prefix']
+                file_name = f"{table_name_prefix}{os.path.basename(file_path).replace('.xlsx', f'_{sheet_name}_normalized.csv')}"
+                output_file = os.path.join(output_path, file_name)
                 store_normalized_data(validated_data, output_file)
 
-if __name__ == '__main__':
-    # Example usage
-    schema_path = 'project_files/schemas/source/gpr/schemas.json'
-    categorized_file_path = 'project_files/data_profiling/schema_category/gpr.json'
-    output_path = 'project_files/datalake/bronze/'
-    ingest_pipeline(schema_path, categorized_file_path, output_path)
+if __name__ == "__main__":
+    # Use argparse to handle command-line arguments
+    parser = argparse.ArgumentParser(description='Run the Excel Ingestion Pipeline.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the YAML configuration file.')
+    args = parser.parse_args()
+
+    # Call the pipeline function with the provided configuration path
+    ingest_pipeline(args.config)
