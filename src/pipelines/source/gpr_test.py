@@ -1,8 +1,23 @@
 import os
 import json
+import yaml
 import pandas as pd
 from collections import defaultdict
 from src.interfaces.schema_manager import SchemaManager
+
+def load_config(config_path):
+    """
+    Load pipeline configuration from a YAML file.
+
+    Args:
+    - config_path (str): Path to the YAML configuration file.
+
+    Returns:
+    - config (dict): Dictionary containing configuration details.
+    """
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
 
 def load_categorized_files(categorized_file_path):
     """
@@ -112,28 +127,25 @@ def extract_sheet_names_for_schema(categorized_files, schema_name):
     return dict(file_sheets)
 
 # Main pipeline function
-def ingest_pipeline(schema_path, categorized_file_path, output_path):
+def ingest_pipeline(config_path):
     """
     Ingest pipeline to process GPR files and normalize them into a common schema.
 
     Args:
-    - schema_path (str): Path to schema YAML file.
-    - categorized_file_path (str): Path to categorized files JSON file.
-    - output_path (str): Output directory path for normalized data.
+    - config_path (str): Path to the pipeline configuration YAML file.
     """
+    # Load pipeline configuration
+    config = load_config(config_path)
+
     # Initialize SchemaManager for the target schema
+    schema_path = config.get('target').get('schema', {}).get('path', '')
     schema_manager = SchemaManager(schema_path)
 
-    # Load categorized files
-    categorized_files = load_categorized_files(categorized_file_path)
-
-    # Extract schema name from schema path (e.g., Variation_1A from the path)
-    schema_name = os.path.basename(schema_path).replace('.yaml', '')
-
-    # Process each file for the current schema
-    file_dict = extract_sheet_names_for_schema(categorized_files, schema_name)
-    
-    for file_path, sheet_names in file_dict.items():
+    # Process each source file as specified in the config
+    for source_file in config['source_files']:
+        file_path = source_file['path']
+        sheet_names = source_file['loader_config']['tab_names']
+        
         # Load the data for the current file
         data = load_gpr_file(file_path, sheet_names)
 
@@ -146,12 +158,13 @@ def ingest_pipeline(schema_path, categorized_file_path, output_path):
             validated_data = schema_manager.validate_data(normalized_data)
             if validated_data is not None:
                 # Store normalized and validated data
-                output_file = os.path.join(output_path, f"{schema_name}_{os.path.basename(file_path).replace('.xlsx', f'_{sheet_name}_normalized.csv')}")
+                output_path = config['target']['writer_config']['destination']
+                table_name_prefix = config['target']['writer_config']['table_name_prefix']
+                file_name = f"{table_name_prefix}{os.path.basename(file_path).replace('.xlsx', f'_{sheet_name}_normalized.csv')}"
+                output_file = os.path.join(output_path, file_name)
                 store_normalized_data(validated_data, output_file)
 
 if __name__ == '__main__':
     # Example usage
-    schema_path = 'src/schemas/source/gpr/Variation_1A.yaml'
-    categorized_file_path = 'src/data_profiling/categorized_files/categorized_files_gpr.json'
-    output_path = 'datalake/bronze/'
-    ingest_pipeline(schema_path, categorized_file_path, output_path)
+    config_path = 'src/configs/source/gpr/Variation_1A_pipeline.yaml'
+    ingest_pipeline(config_path)
