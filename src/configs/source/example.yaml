@@ -1,0 +1,41 @@
+# Pipeline Configuration Template
+
+name: "source_pipeline"
+version: "1.0"
+
+# Metadata information
+metadata:
+  domain: "data_profiling"
+  owner: "data_team"
+  source_system: "internal"
+  refresh_frequency: "daily"
+  description: "This pipeline is used to profile data from different sources and load it into a data warehouse."
+
+source_files:
+  - file_name: "example_file_1.xlsx"
+    file_type: "excel"
+    path: "src/data_profiling/categorized_files/example_file_1.xlsx"
+    loader_config:
+      tab_name: "Sheet1"
+    schema: 
+      path: "" # Schema path left empty
+      schemaversion: ""
+
+  - file_name: "example_file_2.csv"
+    file_type: "csv"
+    path: "src/data_profiling/categorized_files/example_file_2.csv"
+    loader_config: {} # Additional configurations specific to loader
+    schema: 
+      path: "" # Schema path left empty
+      schemaversion: ""
+
+target:
+  type: "parquet"
+  writer_config:
+    destination: "data_warehouse"
+    table_name_prefix: "staging_"
+    append_mode: false
+    partition_by: "date"
+  schema: 
+    path: "schemas/example_schema_1.yml" # Path to schema file (can be left empty)
+    schemaversion: "1.0"
