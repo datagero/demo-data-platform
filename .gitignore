@@ -3,6 +3,7 @@
 poetry.lock
 __pycache__
 
+dev.duckdb
 dev.duckdb.session.sql
 
 project_files
