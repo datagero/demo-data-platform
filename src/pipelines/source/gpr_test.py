@@ -74,6 +74,7 @@ def normalize_data(file_path, sheet_name, sheet_data, schema_columns):
         if col in sheet_data.columns:
             normalized_df[col] = sheet_data[col]
         else:
+            print(f"Column {col} not found in sheet {sheet_name}. Adding as None.")
             normalized_df[col] = None
 
     # Add metadata columns for tracking the file and sheet names
