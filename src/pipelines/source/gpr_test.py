@@ -159,7 +159,7 @@ def ingest_pipeline(schema_path, categorized_file_path, output_path):
 
 if __name__ == '__main__':
     # Example usage
-    schema_path = 'vip_sci/schemas/source/gpr/schemas.json'
-    categorized_file_path = 'vip_sci/data_profiling/categorized_files/categorized_files_gpr.json'
+    schema_path = 'src/schemas/source/gpr/schemas.json'
+    categorized_file_path = 'src/data_profiling/categorized_files/categorized_files_gpr.json'
     output_path = 'datalake/bronze/'
     ingest_pipeline(schema_path, categorized_file_path, output_path)
