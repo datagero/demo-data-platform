@@ -1,60 +1,23 @@
-import os
-import json
+# excel_ingestion_process.py
+import importlib
 import yaml
 import argparse
 import pandas as pd
-from collections import defaultdict
 from src.interfaces.schema_manager import SchemaManager
 
 def load_config(config_path):
     """
     Load pipeline configuration from a YAML file.
-
-    Args:
-    - config_path (str): Path to the YAML configuration file.
-
-    Returns:
-    - config (dict): Dictionary containing configuration details.
     """
     with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
+        return yaml.safe_load(file)
 
-def load_categorized_files(categorized_file_path):
+def dynamic_import(module_name, class_name):
     """
-    Load the categorized files from a JSON file.
-
-    Args:
-    - categorized_file_path (str): Path to the categorized files JSON.
-
-    Returns:
-    - categories (dict): Dictionary containing categorized file information.
+    Dynamically import a module and class by name.
     """
-    with open(categorized_file_path, 'r') as f:
-        categories = json.load(f)
-    return categories
-
-def load_gpr_file(file_path, sheet_names):
-    """
-    Load a GPR file and read relevant sheets.
-
-    Args:
-    - file_path (str): File path of the GPR file.
-    - sheet_names (list): List of relevant sheet names to be read.
-
-    Returns:
-    - data (dict): Dictionary containing data for each sheet.
-    """
-    data = {}
-    try:
-        # Read the specified sheets from the Excel file
-        for sheet_name in sheet_names:
-            sheet_data = pd.read_excel(file_path, sheet_name=sheet_name)
-            data[sheet_name] = sheet_data
-    except Exception as e:
-        print(f"Error loading file {file_path} with sheets {sheet_names}: {e}")
-
-    return data
+    module = importlib.import_module(module_name)
+    return getattr(module, class_name)
 
 def normalize_data(file_path, sheet_name, sheet_data, schema_columns):
     """
@@ -87,72 +50,53 @@ def normalize_data(file_path, sheet_name, sheet_data, schema_columns):
 
     return normalized_df
 
-def store_normalized_data(normalized_data, output_path):
+def ingest_pipeline(config_path, overwrite=False):
     """
-    Store the normalized data in a structured format.
-
-    Args:
-    - normalized_data (pd.DataFrame): Normalized data.
-    - output_path (str): Output file path.
-    """
-    # Create the output directory if it doesn't exist
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    normalized_data.to_csv(output_path, index=False)
-    print(f"Normalized data saved to {output_path}")
-
-def extract_sheet_names_for_schema(categorized_files, schema_name):
-    """
-    Extracts relevant sheet names for each file path based on a specific schema from the categorized files.
-
-    Args:
-    - categorized_files (dict): Dictionary containing categorized file information.
-    - schema_name (str): Name of the schema to filter for.
-
-    Returns:
-    - file_sheets (dict): Dictionary where keys are file paths and values are lists of relevant sheet names.
-    """
-    file_sheets = defaultdict(list)
-
-    # tmp for compatibility, need to replace spaces of keys with underscores
-    categorized_files["exact_match_groups"] = {k.replace(" ", "_"): v for k, v in categorized_files["exact_match_groups"].items()}
-    categorized_files["extended_match_groups"] = {k.replace(" ", "_"): v for k, v in categorized_files["extended_match_groups"].items()}
-
-    # Extract from exact match groups
-    for entry in categorized_files.get("exact_match_groups", {}).get(schema_name, []):
-        file_path = entry[0]
-        sheet_name = entry[1]
-        file_sheets[file_path].append(sheet_name)
-
-    # Extract from extended match groups
-    for entry in categorized_files.get("extended_match_groups", {}).get(schema_name, []):
-        file_path = entry[0]
-        sheet_name = entry[1]
-        file_sheets[file_path].append(sheet_name)
-
-    return dict(file_sheets)
-
-# Main pipeline function
-def ingest_pipeline(config_path):
-    """
-    Ingest pipeline to process GPR files and normalize them into a common schema.
-
-    Args:
-    - config_path (str): Path to the pipeline configuration YAML file.
+    Ingest pipeline to process files and normalize them into a common schema.
     """
     # Load pipeline configuration
     config = load_config(config_path)
 
+    # Determine loaders and writers from configuration
+    loader_dict = {}
+    writer_dict = {}
+
+    # Identify unique loaders required
+    for source_file in config['source_files']:
+        loader_type = source_file['file_type']
+        if loader_type not in loader_dict:
+            # Define loader module and class names based on file type
+            loader_module = f"src.interfaces.loaders.{loader_type}_loader"
+            loader_class = f"{loader_type.capitalize()}Loader"
+            loader_dict[loader_type] = dynamic_import(loader_module, loader_class)()
+
+    # Identify writer required
+    writer_type = config['target']['type']
+    if writer_type not in writer_dict:
+        writer_module = f"src.interfaces.writers.{writer_type}_writer"
+        writer_class = f"{writer_type.capitalize()}Writer"
+        writer_dict[writer_type] = dynamic_import(writer_module, writer_class)()
+
     # Initialize SchemaManager for the target schema
-    schema_path = config.get('target').get('schema', {}).get('path', '')
-    schema_manager = SchemaManager(schema_path)
+    schema_manager = SchemaManager(config['target']['schema']['path'])
+
+    # If overwrite is true, delete existing tables
+    if overwrite and writer_type == 'duckdb':
+        writer = writer_dict[writer_type]
+        db_path = config['target']['writer_config']['destination']
+        namespace = config['target'].get('namespace', 'public')
+        tables_to_delete = [config['target']['table_name']]
+        writer.delete_tables(db_path, namespace, tables_to_delete)
 
     # Process each source file as specified in the config
     for source_file in config['source_files']:
         file_path = source_file['path']
         sheet_names = source_file['loader_config']['tab_names']
-        
+        loader_type = source_file['file_type']
+        loader = loader_dict[loader_type]
+
         # Load the data for the current file
-        data = load_gpr_file(file_path, sheet_names)
+        data = loader.load(file_path, sheet_names=sheet_names)
 
         # Process each sheet separately
         for sheet_name, sheet_data in data.items():
@@ -162,18 +106,25 @@ def ingest_pipeline(config_path):
             # Validate normalized data
             validated_data = schema_manager.validate_data(normalized_data)
             if validated_data is not None:
-                # Store normalized and validated data
+                writer = writer_dict[writer_type]
                 output_path = config['target']['writer_config']['destination']
-                table_name_prefix = config['target']['writer_config']['table_name_prefix']
-                file_name = f"{table_name_prefix}{os.path.basename(file_path).replace('.xlsx', f'_{sheet_name}_normalized.csv')}"
-                output_file = os.path.join(output_path, file_name)
-                store_normalized_data(validated_data, output_file)
+                if writer_type == 'duckdb':
+                    # Extract specific DuckDB writer parameters
+                    db_path = config['target']['writer_config']['destination']
+                    namespace = config['target']['writer_config']['namespace']
+                    table_name = config['target']['writer_config']['table_name']
+                    partition_columns = config['target']['writer_config'].get('partition_by', [])
+
+                    # Call the write method for DuckDB writer
+                    writer.write(validated_data, db_path, namespace, table_name, partition_columns)
+
+                else:
+                    # Handle other writer types, e.g., CSV
+                    fulloutput_path = f"{output_path}/{source_file['file_name']}.csv"
+                    writer.write(validated_data, fulloutput_path)
 
 if __name__ == "__main__":
-    # Use argparse to handle command-line arguments
     parser = argparse.ArgumentParser(description='Run the Excel Ingestion Pipeline.')
     parser.add_argument('--config', type=str, required=True, help='Path to the YAML configuration file.')
     args = parser.parse_args()
-
-    # Call the pipeline function with the provided configuration path
     ingest_pipeline(args.config)
