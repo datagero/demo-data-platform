@@ -1,0 +1,12 @@
+schema_type: dataframe
+version: 0.20.4
+columns:
+  IntegerColumn:
+    dtype: int64
+    nullable: false
+  FloatColumn:
+    dtype: float64
+    nullable: false
+  StringColumn:
+    dtype: str
+    nullable: false

@@ -3,6 +3,7 @@
 poetry.lock
 __pycache__
 
+project_files
 project_commands.py
 experiments
 datalake
