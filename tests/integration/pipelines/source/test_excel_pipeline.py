@@ -86,7 +86,7 @@ def create_test_schema(temp_dirs):
 
     return schema_path
 
-def test_ingest_pipeline(create_test_files, temp_dirs, create_test_schema):
+def test_ingest_pipeline_csv(create_test_files, temp_dirs, create_test_schema):
     """Test the ingest_pipeline function with unique directories and inline schema."""
     source_dir, bronze_dir, configs_dir, schemas_dir = temp_dirs
     schema_path = create_test_schema
@@ -122,7 +122,7 @@ def test_ingest_pipeline(create_test_files, temp_dirs, create_test_schema):
                 - "Sheet2"
 
         target:
-          type: "parquet"
+          type: "csv"
           writer_config:
             destination: "{bronze_dir}"
             table_name_prefix: "test_"
@@ -160,5 +160,82 @@ def test_ingest_pipeline(create_test_files, temp_dirs, create_test_schema):
 
     print("All tests passed!")
 
+def test_ingest_pipeline_duckdb(create_test_files, temp_dirs, create_test_schema):
+    import duckdb
+    """Test the ingest_pipeline function with DuckDB writer."""
+    source_dir, bronze_dir, configs_dir, schemas_dir = temp_dirs
+    schema_path = create_test_schema
+
+    # Create a unique configuration file dynamically
+    unique_id = uuid.uuid4()
+    config_path = os.path.join(configs_dir, f'test_config_duckdb_{unique_id}.yaml')
+    db_path = os.path.join(bronze_dir, 'test_duckdb.db')
+    
+    # Create a DuckDB connection and schema
+    conn = duckdb.connect(db_path)
+    conn.execute(f"CREATE SCHEMA IF NOT EXISTS main_bronze;")
+
+    with open(config_path, 'w') as config_file:
+        config_file.write(f"""
+        name: "Test_Variation_1B_pipeline_DuckDB_{unique_id}"
+        version: "1.0"
+        
+        metadata:
+          domain: "Test"
+          owner: "test_team"
+          source_system: "test_internal"
+          refresh_frequency: "adhoc"
+          description: "Test pipeline for loading and profiling Excel data into DuckDB."
+
+        source_files:
+          - file_name: "test_file_1.xlsx"
+            file_type: "excel"
+            path: "{os.path.join(source_dir, 'test_file_1.xlsx')}"
+            loader_config:
+              tab_names:
+                - "Sheet1"
+
+          - file_name: "test_file_2.xlsx"
+            file_type: "excel"
+            path: "{os.path.join(source_dir, 'test_file_2.xlsx')}"
+            loader_config:
+              tab_names:
+                - "Sheet2"
+
+        target:
+          type: "duckdb"
+          writer_config:
+            destination: "{db_path}"
+            namespace: "main_bronze"
+            table_name: "example"
+            append_mode: false
+            partition_by:
+              - source_filepath
+              - source_sheetname
+          schema:
+            path: "{schema_path}"
+        """)
+
+    # Run the ingest pipeline
+    ingest_pipeline(config_path)
+
+    # Connect to DuckDB and check if data is written correctly
+    result_df = conn.execute("SELECT * FROM main_bronze.example").fetchdf()
+
+    # Validate that data was written to DuckDB
+    assert len(result_df) > 0, "No data was written to DuckDB!"
+
+    # Print the output for debugging
+    print(f"Data in DuckDB:\n{result_df.head()}")
+
+    expected_columns = ['Column1', 'Column2', 'source_filepath', 'source_sheetname', 'created_time']
+    assert all(col in result_df.columns for col in expected_columns), "Expected columns are missing in DuckDB table!"
+
+    # Close the DuckDB connection
+    conn.close()
+
+    print("DuckDB writer test passed successfully!")
+
 if __name__ == "__main__":
-    test_ingest_pipeline()
+    test_ingest_pipeline_csv()
+    test_ingest_pipeline_duckdb()
