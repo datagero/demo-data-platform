@@ -1,10 +1,13 @@
+.env
 .vscode
 .DS_Store
 poetry.lock
 __pycache__
 
+dev.duckdb
 dev.duckdb.session.sql
 
+secrets
 project_files
 project_commands.py
 experiments

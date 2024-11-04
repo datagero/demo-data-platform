@@ -16,7 +16,23 @@ openpyxl = "^3.1.5"
 apache-airflow = "^2.10.0"
 pytest = "^8.3.2"
 pandera = {extras = ["io"], version = "^0.20.4"}
+dbt-core = "^1.8.6"
 dbt-duckdb = "^1.8.3"
+git-filter-repo = "^2.45.0"
+
+[tool.poetry.group.tmpo.dependencies]
+mysql-connector-python = "^9.0.0"
+
+[tool.poetry.group.analytics.dependencies]
+colorlover = "^0.3.0"
+selenium = "^4.25.0"
+playwright = "^1.47.0"
+scikit-learn = "^1.5.2"
+geopandas = "^1.0.1"
+
+[tool.poetry.group.eda.dependencies]
+ydata-profiling = "^4.10.0"
+dash = "^2.18.1"
 
 [build-system]
 requires = ["poetry-core"]
