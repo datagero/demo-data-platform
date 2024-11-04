@@ -5,7 +5,7 @@ import pandas as pd
 import tempfile
 import pytest
 import uuid  # To create a unique identifier for each test run
-from src.pipelines.source.excel_ingestion_process import ingest_pipeline
+from src.pipelines.source.ingestion_excel_to_csv import ingestion_pipeline
 
 @pytest.fixture()
 def temp_dirs():
@@ -133,7 +133,7 @@ def test_ingest_pipeline_csv(create_test_files, temp_dirs, create_test_schema):
         """)
 
     # Run the ingest pipeline
-    ingest_pipeline(config_path)
+    ingestion_pipeline(config_path)
 
     # Check if output files are generated correctly
     output_files = os.listdir(bronze_dir)
@@ -217,7 +217,7 @@ def test_ingest_pipeline_duckdb(create_test_files, temp_dirs, create_test_schema
         """)
 
     # Run the ingest pipeline
-    ingest_pipeline(config_path)
+    ingestion_pipeline(config_path)
 
     # Connect to DuckDB and check if data is written correctly
     result_df = conn.execute("SELECT * FROM main_bronze.example").fetchdf()

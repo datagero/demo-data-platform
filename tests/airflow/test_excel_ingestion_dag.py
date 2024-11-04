@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import tempfile
 import pytest
-from src.airflow.dags.excel_ingestion_dag import process_excel_file
+from src.airflow.dags.example_excel_ingestion_dag import process_excel_file
 
 @pytest.fixture()
 def temp_dirs():

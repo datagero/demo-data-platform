@@ -41,7 +41,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='excel_ingestion_dag',
+    dag_id='example_excel_ingestion_dag',
     default_args=default_args,
     schedule_interval='@daily',  # Run once daily; adjust as needed
     catchup=False

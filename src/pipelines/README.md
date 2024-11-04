@@ -106,7 +106,7 @@ The writer configuration determines the format and destination of the output:
    Run the pipeline using the `ingest_pipeline` function:
 
 ```python
-from src.pipelines.source.excel_ingestion_process import ingest_pipeline
+from src.pipelines.source.ingestion_excel_to_csv import ingest_pipeline
 
 # Run the pipeline with the configuration file
 ingest_pipeline('project_files/configs/pipeline_config.yaml')
@@ -115,7 +115,7 @@ ingest_pipeline('project_files/configs/pipeline_config.yaml')
 Alternatively, execute from the command line:
 
 ```bash
-python src/pipelines/source/excel_ingestion_process.py --config project_files/configs/source/example/pipeline_config.yaml
+python src/pipelines/source/ingestion_excel_to_csv.py --config project_files/configs/source/example/pipeline_config.yaml
 ```
 
 ### Normalization Details
@@ -140,7 +140,7 @@ project/
 ├── src/
 │   └── pipelines/
 │       └── source/
-│           └── excel_ingestion_process.py
+│           └── ingestion_excel_to_csv.py
 │
 ├── tests/
 │   └── integration/
